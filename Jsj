@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <title>Agar.io Mini</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: #222; }
+    canvas { display: block; background: #111; }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let player = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      radius: 30,
+      color: "lime",
+      speed: 5
+    };
+
+    let foods = [];
+    let keys = {};
+
+    // Tasodifiy rang
+    function randomColor() {
+      const colors = ["red", "orange", "yellow", "lime", "cyan", "blue", "magenta"];
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    // Oziqlarni yaratamiz
+    function spawnFoods(num) {
+      for (let i = 0; i < num; i++) {
+        foods.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          radius: 5 + Math.random() * 5,
+          color: randomColor()
+        });
+      }
+    }
+
+    spawnFoods(50);
+
+    // Tugmalarni kuzatish
+    window.addEventListener("keydown", e => keys[e.key] = true);
+    window.addEventListener("keyup", e => keys[e.key] = false);
+
+    function update() {
+      if (keys["ArrowUp"]) player.y -= player.speed;
+      if (keys["ArrowDown"]) player.y += player.speed;
+      if (keys["ArrowLeft"]) player.x -= player.speed;
+      if (keys["ArrowRight"]) player.x += player.speed;
+
+      // Chegaradan chiqmaslik
+      player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
+      player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
+
+      // Oziqni tekshirish
+      foods = foods.filter(food => {
+        let dx = player.x - food.x;
+        let dy = player.y - food.y;
+        let dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < player.radius + food.radius) {
+          // Oziq yeyildi → o'yinchi kattalashadi
+          player.radius += 0.5;
+          return false; // oziq yo‘qoladi
+        }
+        return true;
+      });
+
+      // Oziqlar kamayib qolsa, yangisini qo‘shamiz
+      if (foods.length < 30) {
+        spawnFoods(20);
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Oziqlar
+      for (let food of foods) {
+        ctx.beginPath();
+        ctx.arc(food.x, food.y, food.radius, 0, Math.PI * 2);
+        ctx.fillStyle = food.color;
+        ctx.fill();
+      }
+
+      // O'yinchi
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+      ctx.fillStyle = player.color;
+      ctx.fill();
+    }
+
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    loop();
+  </script>
+</body>
+</html>
